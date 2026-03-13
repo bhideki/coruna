@@ -37,7 +37,7 @@ async def main():
     print("\n[*] Coruna rodando. Acesse http://IP_DA_VPS/ no iPhone")
     print("[*] Comandos: list (sessões) | quit (sair)\n")
 
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     while True:
         try:
             cmd = await loop.run_in_executor(None, lambda: input("(coruna)> ").strip().lower())

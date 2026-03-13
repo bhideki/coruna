@@ -1,0 +1,1 @@
+console.log("Fingerprint.js loaded");

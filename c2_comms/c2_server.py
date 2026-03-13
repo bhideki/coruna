@@ -1,5 +1,5 @@
 import asyncio
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 from asyncio import Queue
 from .session import Session # Importação relativa
 
@@ -36,11 +36,11 @@ class C2Server:
             await writer.wait_closed()
             await self.session_notification_queue.put(f"SESSION_CLOSED:{session.id}")
 
-    def get_sessions_summary(self) -> list[dict]:
+    def get_sessions_summary(self) -> List[dict]:
         """Retorna um resumo das sessões ativas para exibição."""
         return [session.to_dict() for session in self.active_sessions.values()]
 
-    def get_session_by_id(self, session_id: str) -> Session | None:
+    def get_session_by_id(self, session_id: str) -> Optional[Session]:
         """Retorna uma instância de Session pelo ID."""
         return self.active_sessions.get(session_id)
         

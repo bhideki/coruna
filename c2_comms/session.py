@@ -26,14 +26,30 @@ class Session:
         }
 
     async def send_command(self, command: str):
+        """Envia comando para a shell remota (append \\n)."""
         self.current_command = command
-        # Lógica para enviar o comando pela shell (implementar depois)
-        # Ex: self.writer.write(command.encode() + b'\n')
-        # await self.writer.drain()
-        pass 
+        try:
+            self.writer.write((command + "\n").encode())
+            await self.writer.drain()
+        except Exception as e:
+            raise RuntimeError(f"Erro ao enviar comando: {e}") from e
 
-    async def read_output(self):
-        # Lógica para ler o output da shell (implementar depois)
-        # Ex: data = await self.reader.read(4096)
-        # self.output_buffer.append(data.decode())
-        pass 
+    async def read_output(self, timeout: float = 0.5) -> str:
+        """Lê dados disponíveis do reader e adiciona ao buffer. Retorna o que foi lido."""
+        try:
+            data = await asyncio.wait_for(self.reader.read(65536), timeout=timeout)
+            if data:
+                text = data.decode("utf-8", errors="replace")
+                self.output_buffer.append(text)
+                return text
+        except asyncio.TimeoutError:
+            pass
+        except Exception:
+            raise
+        return ""
+
+    def get_buffered_output(self) -> str:
+        """Retorna e limpa o buffer de output."""
+        out = "".join(self.output_buffer)
+        self.output_buffer.clear()
+        return out

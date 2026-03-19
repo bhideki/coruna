@@ -6,13 +6,11 @@ Verificação entre `coruna_repo` (khanhduytran0/coruna) e `ios_orchestrator/exp
 
 ## 1. Causa mais provável de “não teve nenhum shell”
 
-### 1.1 `payloads/bootstrap.dylib` não existe
+### 1.1 `payloads/bootstrap.dylib`
 
 - **Stage3_VariantB.js** (linha ~1342) faz `_xhr.open("GET", "payloads/bootstrap.dylib", false)` e usa a resposta para construir o dylib injetado.
-- Em **ambos** os projetos (`coruna_repo` e `ios_orchestrator/exploits/coruna`) a pasta `payloads/` contém apenas:
-  - `manifest.json`
-  - 3 subpastas com um ficheiro cada (ex.: `f8a86cf3.../entry1_type0x0a.bin`).
-- **Não existe** `payloads/bootstrap.dylib` em nenhum dos dois.
+- O repositório **khanhduytran0/coruna no GitHub** inclui `payloads/bootstrap.dylib` (89 328 bytes) e `payloads/manifest.json`. O clone local `coruna_repo` pode estar desatualizado.
+- Foi obtido **bootstrap.dylib** do upstream e colocado em `ios_orchestrator/exploits/coruna/payloads/bootstrap.dylib` (URL: `https://raw.githubusercontent.com/khanhduytran0/coruna/main/payloads/bootstrap.dylib`).
 - O documento **coruna_repo/ANALYSIS.md** descreve o pipeline de desencriptação e indica que o resultado deve incluir `payload/bootstrap.dylib` e as entradas por hash; esse passo gera ficheiros que **não estão** no repositório (provavelmente por serem binários / .gitignore).
 - **Consequência:** quando o Stage 3 corre, o pedido a `payloads/bootstrap.dylib` devolve 404 ou corpo vazio. O código usa essa resposta como Mach-O; com buffer vazio ou inválido o Stage 3 falha (ou lança mais tarde). Por isso a chain pode “terminar” sem injectar o dylib real e **não há shell**.
 - Foi adicionada uma verificação em **Stage3_VariantB.js**: se o GET a `payloads/bootstrap.dylib` não for 200 ou o corpo for curto (< 1024 bytes), o loader regista um erro claro e lança, para que apareça na UI: *"Missing or invalid payloads/bootstrap.dylib ... Add bootstrap.dylib from the Coruna decryption pipeline"*.
@@ -23,7 +21,7 @@ Verificação entre `coruna_repo` (khanhduytran0/coruna) e `ios_orchestrator/exp
 - No disco temos só **3** subpastas sob `payloads/`, cada uma com **um** ficheiro (`entry1_type0x0a.bin`).
 - Ou seja, a maior parte dos ficheiros referidos no manifest **não existe**. Quando o Stage 3 e o dylib pedem um container por hash, `buildContainer()` chama `fetchBin("payloads/<hash>/<file>")`; para a maioria dos hashes/ficheiros isso resulta em 404. O fluxo de payload está portanto incompleto mesmo que o bootstrap existisse.
 
-**Resumo:** Não ter shell é consistente com: (1) falta de `bootstrap.dylib` e (2) falta da maioria dos payloads por hash. Nada disso foi alterado por nós em relação ao repo de referência; é uma lacuna dos repositórios (payloads desencriptados não commitados).
+**Resumo:** O **khanhduytran0/coruna** no GitHub tem `payloads/bootstrap.dylib` e `payloads/manifest.json`; o bootstrap foi copiado para o nosso `payloads/`. Os subdiretórios por hash no upstream têm a mesma estrutura (muitos só com ficheiros parciais). O **zeroxjf/iOS-Coruna-Reconstruction** é apenas análise (README, clean-room C); não inclui binários.
 
 ---
 

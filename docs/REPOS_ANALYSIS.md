@@ -64,3 +64,17 @@ Estes dois aliases foram adicionados em `group.html` na função `ensureReadStri
   (1) primitiva incompleta (falta de `readByte` / `readDoubleAsPointer`),  
   (2) crash dentro do Stage 3 e reload em ciclo.  
   Com os aliases **readByte** e **readDoubleAsPointer** e o guard de sessionStorage antes do Stage 3, reduzimos (1) e (2). Recomenda-se novo deploy e teste no dispositivo.
+
+---
+
+## 6. Outros repositórios Coruna (referência)
+
+Para referência e para confirmar que não falta nada na nossa base (khanhduytran0/coruna), foram verificados mais três repositórios públicos:
+
+| Repo | Conteúdo | Uso para o nosso payload/chain |
+|------|----------|----------------------------------|
+| **[matteyeux/coruna](https://github.com/matteyeux/coruna)** | Deobfuscated JS e blobs de b27.icu: módulos com nomes hash (Fq2t1Q_dbfd6e84.js, YGPUu7_8dbfa3fd.js, KRfmo6_166411bd.js), config/fallback, final_payload_A/B com .macho.bin, .shellcode.bin, .blob*.bin, pastas kernel_exploit, powerd_implant, shellcode. | Layout e naming **diferentes** do khanhduytran0 (não há group.html + Stage1/2/3 + payloads/manifest.json). Útil para análise alternativa; **não** é drop-in para a nossa chain. |
+| **[Rat5ak/CORUNA_IOS-MACOS_FULL_DUMP](https://github.com/Rat5ak/CORUNA_IOS-MACOS_FULL_DUMP)** | README + `coruna-dump.zip` (~1.2 MB): samples/ (28 JS), extracted_wasm/, extracted_binaries/ (Mach-O, shellcode), decoded_payloads/, analysis_scripts/. | Dump de amostras e artefactos extraídos; conteúdo dentro do zip. A nossa chain espera `payloads/bootstrap.dylib` + manifest + hash dirs como no khanhduytran0; **não** precisamos de alterar nada com base neste dump. |
+| **[zeroxjf/iOS-Coruna-Reconstruction](https://github.com/zeroxjf/iOS-Coruna-Reconstruction)** | Reconstrução em clean-room: README enorme (análise Stage1/2/3, bootstrap, 0x80000/0x90000/0xF0000), clean-room/ (C headers + src), tools/ (coruna_payload_tool.py). **Sem binários** (exploit binaries excluded). | Apenas **análise e documentação**. Referencia `live-site/payloads/bootstrap.dylib` como input de análise; não publica ficheiros. Nada a copiar para o nosso payloads/. |
+
+**Conclusão:** Nenhum destes três exige alterações no nosso código ou na estrutura de payloads. O bootstrap e o layout que usamos vêm do khanhduytran0/coruna; os outros servem como referência de análise.
